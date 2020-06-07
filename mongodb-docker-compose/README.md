@@ -10,11 +10,11 @@ This file contains the create the username and password for the database while i
 
 ```json
 db.createUser ({
-user: "myidsrvdbuser",
-pwd: "myidsrvdbpwd@1234",
+user: "myuser",
+pwd: "mypass",
 roles: [{
         role: "readWrite",
-        db: "myidsrvdb"
+        db: "mydb"
 }]
 })
 ```
@@ -28,12 +28,12 @@ services:
     image: mongo
     container_name: my_cloud_mongodb
     environment:
-      - MONGO_INITDB_DATABASE=myidsrvdb
-      - MONGO_INITDB_ROOT_USERNAME=myidsrvdbuser
-      - MONGO_INITDB_ROOT_PASSWORD=myidsrvdbpwd@1234
+      - MONGO_INITDB_DATABASE=mydb
+      - MONGO_INITDB_ROOT_USERNAME=myuser
+      - MONGO_INITDB_ROOT_PASSWORD=mypass
     volumes:
       - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
-      - ./mongo-volume:/var/db/mycloud/mongodb
+      - ./mongo-volume:/var/db/mongodb
     ports:
       - '27017-27019:27017-27019'
 ```
