@@ -7,8 +7,7 @@ The Client class creates an RMI connector client that is configured to connect t
 ```java
 echo("\nCreate an RMI connector client and " +
     "connect it to the RMI connector server");
-JMXServiceURL url = 
-    new JMXServiceURL("service:jmx:rmi:///jndi/rmi://:9999/jmxrmi");
+JMXServiceURL url = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://:56573/jmxrmi");
 JMXConnector jmxc = JMXConnectorFactory.connect(url, null);
 ```
 
