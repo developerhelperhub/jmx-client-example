@@ -1,8 +1,8 @@
 db.createUser ({
-user: "myidsrvdbuser",
-pwd: "myidsrvdbpwd@1234",
+user: "myuser",
+pwd: "mypass",
 roles: [{
-	role: "readWrite",
-	db: "myidsrvdb"
+        role: "readWrite",
+        db: "mydb"
 }]
 })
