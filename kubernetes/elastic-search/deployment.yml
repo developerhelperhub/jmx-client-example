@@ -1,22 +1,84 @@
+apiVersion: v1
+# We have defined the kind as PersistentVolume which tells kubernetes that the yaml file being used is to create the Persistent Volume.
+kind: PersistentVolume
+metadata:
+
+  # Name of PersistentVolume that we are creating.
+  name: my-pv-volume
+  labels:
+    type: local
+
+spec:
+
+  # Used to bind PersistentVolumeClaim requests to this PersistentVolume.
+  storageClassName: manual
+
+  # This spec will define the capacity of PV that we are trying to create.
+  capacity:
+
+    #This tells the underlying infrastructure that we are trying to claim 10Gi space on the defined path.
+    storage: 10Gi
+
+  # This tells the access rights of the volume that we are creating.
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+
+    # This definition tells the machine that we are trying to create volume under this path on the underlying infrastructure.
+    path: "/var/mycloud/volume"
+
+---
+apiVersion: v1
+#  It instructs the underlying infrastructure that we are trying to claim a specified amount of space.
+kind: PersistentVolumeClaim
+metadata:
+
+  #Name of the claim that we are trying to create.
+  name: my-pvc-volume
+
+
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+
+  resources:
+    requests:
+
+      # This will tell kubernetes about the amount of space we are trying to claim.
+      storage: 3Gi
+
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: my-cloud-elasticsearch
-  labels:
-    app: my-cloud-elasticsearch
+  name: my-elasticsearch
+
 spec:
+  # A deployment's specification really only 
+  # has a few useful options
+  
+  # How many copies of each pod do we want?
   replicas: 1
+
+  # Which pods are managed by this deployment?
   selector:
     matchLabels:
-      app: my-cloud-elasticsearch
+      app: my-elasticsearch
+
+  # This template field is a regular pod configuration 
+  # nested inside the deployment spec
   template:
     metadata:
       labels:
-        app: my-cloud-elasticsearch
+        app: my-elasticsearch
+
     spec:
       containers:
-        - name: my-cloud-elasticsearch
+        - name: my-elasticsearch
           image: elasticsearch:7.7.1
+
+          # This is the path in the container on which the mounting will take place.
           volumeMounts: 
             - name: elasticsearch-data
               mountPath: /usr/share/elasticsearch/data
@@ -28,6 +90,7 @@ spec:
           ports:
             - containerPort: 9200
             - containerPort: 9300
+
       initContainers:
         - name: create 
           image: busybox:1.28
@@ -41,18 +104,27 @@ spec:
           volumeMounts: 
             - name: elasticsearch-data
               mountPath: /usr/share/elasticsearch/data
+
+      # This definition defines the volume definition that we are going to claim.
       volumes:
         - name: elasticsearch-data
+
+          # Under this, we define the volume name which we are going to use in the defined pod.
           persistentVolumeClaim:
-            claimName: my-cloud-pvc-volume
+            claimName: my-pvc-volume
+
 ---
 kind: Service
 apiVersion: v1
 metadata:
-  name: my-cloud-elasticsearch
+  # This is the service name of application
+  name: my-elasticsearch
 spec:
+
   selector:
-    app: my-cloud-elasticsearch
+    app: my-elasticsearch
+
+
   ports:
     - name: http
       protocol: TCP
@@ -62,30 +134,5 @@ spec:
       protocol: TCP
       port: 9300
       targetPort: 9300
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: my-cloud-pvc-volume
-spec:
-  storageClassName: manual
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 3Gi
----
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: my-cloud-pv-volume
-  labels:
-    type: local
-spec:
-  storageClassName: manual
-  capacity:
-    storage: 10Gi
-  accessModes:
-    - ReadWriteOnce
-  hostPath:
-    path: "/var/mycloud/volume"
+
+

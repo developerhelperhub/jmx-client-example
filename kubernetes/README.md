@@ -222,4 +222,100 @@ minikube delete
 kubectl port-forward service/nginx-service 7000:80
 ```
 
+### Volumes
+A Kubernetes [volume](https://kubernetes.io/docs/concepts/storage/volumes/), on the other hand, has an explicit lifetime - the same as the Pod that encloses it. Consequently, a volume outlives any Containers that run within the Pod, and data is preserved across Container restarts. Of course, when a Pod ceases to exist, the volume will cease to exist, too. Perhaps more importantly than this, Kubernetes supports many types of volumes, and a Pod can use any number of them simultaneously.
 
+
+#### Types of Volumes
+Kubernetes supports several types of Volumes:
+* awsElasticBlockStore
+* azureDisk
+* emptyDir
+* gcePersistentDisk
+* local
+* persistentVolumeClaim
+* [secret](https://kubernetes.io/docs/concepts/configuration/secret/)
+
+#### Persistent Volumes
+Managing storage is a distinct problem from managing compute instances. The PersistentVolume subsystem provides an API for users and administrators that abstracts details of how storage is provided from how it is consumed. To do this, we introduce two new API resources: PersistentVolume and PersistentVolumeClaim.
+
+*A PersistentVolume (PV)* is a piece of storage in the cluster that has been provisioned by an administrator or dynamically provisioned using Storage Classes. It is a resource in the cluster just like a node is a cluster resource. PVs are volume plugins like Volumes, but have a lifecycle independent of any individual Pod that uses the PV. This API object captures the details of the implementation of the storage, be that NFS, iSCSI, or a cloud-provider-specific storage system.
+
+*A PersistentVolumeClaim (PVC)* is a request for storage by a user. It is similar to a Pod. Pods consume node resources and PVCs consume PV resources. Pods can request specific levels of resources (CPU and Memory). Claims can request specific size and access modes (e.g., they can be mounted ReadWriteOnce, ReadOnlyMany or ReadWriteMany, see AccessModes).
+
+
+### Deployment Example
+Everyone running applications on Kubernetes cluster uses a deployment.
+
+It’s what you use to scale, roll out, and roll back versions of your applications.
+
+With a deployment, you tell Kubernetes how many copies of a Pod you want running. The deployment takes care of everything else.
+
+#### What is a Deployment?
+A deployment is an object in Kubernetes that lets you manage a set of identical pods.
+
+Without a deployment, you’d need to create, update, and delete a bunch of pods manually.
+
+With a deployment, you declare a single object in a YAML file. This object is responsible for creating the pods, making sure they stay up to date, and ensuring there are enough of them running
+
+You can also easily autoscale your applications using a Kubernetes deployment.
+
+```yaml
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  name: nginx-deployment
+spec:
+  # A deployment's specification really only 
+  # has a few useful options
+  
+  # 1. How many copies of each pod do we want?
+  replicas: 3
+
+  # 2. How do want to update the pods?
+  strategy: Recreate
+
+  # 3. Which pods are managed by this deployment?
+  selector:
+    # This must match the labels we set on the pod!
+    matchLabels:
+      deploy: example
+  
+  # This template field is a regular pod configuration 
+  # nested inside the deployment spec
+  template:
+    metadata:
+      # Set labels on the pod.
+      # This is used in the deployment selector.
+      labels:
+        deploy: example
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.7.9
+```
+First, the replicas key sets the number of instances of the pod that the deployment should keep alive.
+
+Next, we use a label selector to tell the deployment which pods are part of the deployment. This essentially says "all the pods matching these labels are grouped in our deployment."
+
+After that, we have the template object.
+
+This is interesting. It’s essentially a pod template jammed inside our deployment spec. When the deployment creates pods, it will create them using this template!
+
+So everything under the template key is a regular pod specification.
+
+In this case, the deployment will create pods that run nginx-hostname and with the configured labels.
+
+#### Deployment vs service
+A deployment is used to keep a set of pods running by creating pods from a template.
+
+A service is used to allow network access to a set of pods.
+
+Both services and deployments choose which pods they operate on using labels and label selectors. This is where the overlap is.
+
+You can use deployments independent of services. You can use services independent of deployments. They just go together really nicely!
+
+This lets you do canary deployments. You add a new deployment version of a pod and run it alongside your existing deployment, but have both deployments handle requests to the service. Once deployed, you can verify the new deployment on a small proportion of the service's traffic, and gradually scale up the new deployment while decreasing the old one.
+
+#### Reference
+https://matthewpalmer.net/kubernetes-app-developer/articles/kubernetes-deployment-tutorial-example-yaml.html
